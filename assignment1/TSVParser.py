@@ -10,7 +10,7 @@ Usage: TSVParser [-t tsv file] [-x xhtml file] [-c column headers txt file]
 
 Options:
 -t tsv file, --tsv=file
-    Parse the given TSV file and turn it into JSON.
+    Parse the given TSV file and turn it into XHTML.
 -x xhtml file --xhtml=file
     Output the named XHTML file.
 -c column headers file --cols=file
@@ -22,8 +22,8 @@ class _Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
         
-def checkFilePath(filePath, checkPath=True):
-    if checkPath:
+def checkFilePath(filePath, checkFile=True):
+    if checkFile:
         return filePath <> None and os.path.isfile(filePath)
     else:
         return filePath <> None and not os.path.exists(filePath)
@@ -53,10 +53,11 @@ def main(argv=None):
                 colHeaderFilePath = value    
                 
         if not checkFilePath(tsvFilePath) or not checkFilePath(colHeaderFilePath):
-            raise _Usage("")
+            raise _Usage(_helpMessage)
             
-        xhtml = XHTML()
-        table = xhtml.table()
+        xhtml = XHTML('html')
+        xhtml.head()
+        table = xhtml.body().table()
             
         with open(colHeaderFilePath) as headers:
             cols = headers.read().splitlines()
@@ -66,9 +67,7 @@ def main(argv=None):
             if ":" in col:
                 continue
             tableHeader.th(col)
-            
-        theMagic = magic.Magic(mime_encoding=True)
-            
+                        
         with open(tsvFilePath) as tsv:
             for line in csv.reader(tsv, dialect="excel-tab"):
                 diff = len(cols) - len(line)
@@ -88,6 +87,7 @@ def main(argv=None):
                     tableRow.td(val)
                     
         f = open(xhtmlFilePath, "w")
+        print >>f, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">'
         print >>f, xhtml
         f.close()
           
